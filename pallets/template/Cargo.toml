@@ -22,6 +22,10 @@ scale-info = { features = [
 frame-benchmarking = { optional = true, workspace = true }
 frame-support.workspace = true
 frame-system.workspace = true
+fhe.workspace = true
+fhe-math.workspace = true
+fhe-util.workspace = true
+fhe-traits.workspace = true
 
 [dev-dependencies]
 sp-core = { default-features = true, workspace = true }
