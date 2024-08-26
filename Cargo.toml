@@ -9,6 +9,7 @@ edition = "2021"
 members = [
     "node",
     "pallets/template",
+    "pallets/fhe-math",
     "runtime",
 ]
 resolver = "2"
@@ -72,9 +73,10 @@ sp-storage = { version = "21.0.0", default-features = false }
 sp-transaction-pool = { version = "34.0.0", default-features = false }
 sp-version = { version = "37.0.0", default-features = false }
 substrate-wasm-builder = { version = "24.0.0", default-features = false }
+rand = { version = "0.8", default-features = false, features = ["alloc"] }
 
 # fhe deps
-fhe = { git = "https://github.com/Cloak-Network/fhe-no-std.git"}
-fhe-util = { git = "https://github.com/Cloak-Network/fhe-no-std.git"}
-fhe-math = { git = "https://github.com/Cloak-Network/fhe-no-std.git"}
-fhe-traits = { git = "https://github.com/Cloak-Network/fhe-no-std.git"}
+fhe = { git = "https://github.com/JyTey2004/fhe-no-std.git", rev = "df5c49a" }
+fhe-util = { git = "https://github.com/JyTey2004/fhe-no-std.git", rev = "df5c49a" }
+fhe-math = { git = "https://github.com/JyTey2004/fhe-no-std.git", rev = "df5c49a" }
+fhe-traits = { git = "https://github.com/JyTey2004/fhe-no-std.git", rev = "df5c49a" }

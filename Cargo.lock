@@ -2005,7 +2005,7 @@ dependencies = [
 [[package]]
 name = "fhe"
 version = "0.1.0-beta.8"
-source = "git+https://github.com/Cloak-Network/fhe-no-std.git#c149bc77382a17e118f4bc434d4b3ebf05d975ad"
+source = "git+https://github.com/JyTey2004/fhe-no-std.git?rev=df5c49a#df5c49a187bf6937bfb283bbd296c3217296aa76"
 dependencies = [
  "doc-comment",
  "fhe-math",
@@ -2028,7 +2028,7 @@ dependencies = [
 [[package]]
 name = "fhe-math"
 version = "0.1.0-beta.8"
-source = "git+https://github.com/Cloak-Network/fhe-no-std.git#c149bc77382a17e118f4bc434d4b3ebf05d975ad"
+source = "git+https://github.com/JyTey2004/fhe-no-std.git?rev=df5c49a#df5c49a187bf6937bfb283bbd296c3217296aa76"
 dependencies = [
  "concrete-ntt",
  "derivative",
@@ -2055,7 +2055,7 @@ dependencies = [
 [[package]]
 name = "fhe-traits"
 version = "0.1.0-beta.8"
-source = "git+https://github.com/Cloak-Network/fhe-no-std.git#c149bc77382a17e118f4bc434d4b3ebf05d975ad"
+source = "git+https://github.com/JyTey2004/fhe-no-std.git?rev=df5c49a#df5c49a187bf6937bfb283bbd296c3217296aa76"
 dependencies = [
  "rand",
 ]
@@ -2063,7 +2063,7 @@ dependencies = [
 [[package]]
 name = "fhe-util"
 version = "0.1.0-beta.8"
-source = "git+https://github.com/Cloak-Network/fhe-no-std.git#c149bc77382a17e118f4bc434d4b3ebf05d975ad"
+source = "git+https://github.com/JyTey2004/fhe-no-std.git?rev=df5c49a#df5c49a187bf6937bfb283bbd296c3217296aa76"
 dependencies = [
  "itertools 0.12.1",
  "num-bigint-dig",
@@ -5133,6 +5133,25 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "scale-info",
+ "sp-runtime",
+]
+
+[[package]]
+name = "pallet-fhe-math"
+version = "0.1.0"
+dependencies = [
+ "fhe",
+ "fhe-math",
+ "fhe-traits",
+ "fhe-util",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "rand",
+ "scale-info",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
 ]
 
