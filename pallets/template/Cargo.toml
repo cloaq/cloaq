@@ -26,6 +26,8 @@ fhe.workspace = true
 fhe-math.workspace = true
 fhe-util.workspace = true
 fhe-traits.workspace = true
+sp-std.workspace = true
+rand.workspace = true
 
 [dev-dependencies]
 sp-core = { default-features = true, workspace = true }

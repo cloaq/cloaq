@@ -63,10 +63,15 @@ pub use weights::*;
 // All pallet logic is defined in its own module and must be annotated by the `pallet` attribute.
 #[frame_support::pallet]
 pub mod pallet {
-	// Import various useful types required by all FRAME pallets.
-	use super::*;
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
+    // Import various useful types required by all FRAME pallets.
+    use super::*;
+    use fhe::bfv::{BfvParametersBuilder, Ciphertext, Encoding, Plaintext, PublicKey, SecretKey};
+    use fhe_traits::*;
+    use frame_support::pallet_prelude::*;
+    use frame_support::BoundedVec;
+    use frame_system::pallet_prelude::*;
+    use rand::{rngs::SmallRng, Rng, SeedableRng};
+    use sp_std::prelude::*;
 
 	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
 	// (`Call`s) in this pallet.

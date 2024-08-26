@@ -70,7 +70,8 @@ pub mod pallet {
     use frame_support::pallet_prelude::*;
     use frame_support::BoundedVec;
     use frame_system::pallet_prelude::*;
-    use rand::{rngs::OsRng, thread_rng};
+    use rand::{rngs::SmallRng, SeedableRng};
+    use sp_std::prelude::*;
 
     // The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
     // (`Call`s) in this pallet.
@@ -182,6 +183,13 @@ pub mod pallet {
         },
     }
 
+    #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+    pub enum Operation {
+        Add,
+        Sub,
+        Mul,
+    }
+
     /// Errors that can be returned by this pallet.
     ///
     /// Errors tell users that something went wrong so it's important that their naming is
@@ -244,10 +252,10 @@ pub mod pallet {
                 .build_arc()
                 .map_err(|_| Error::<T>::FailedToCreateParameters)?;
 
-            let mut rng = thread_rng();
+            let mut rng = SmallRng::seed_from_u64(1);
 
             // Generate keys
-            let secret_key = SecretKey::random(&parameters, &mut OsRng);
+            let secret_key = SecretKey::random(&parameters, &mut rng);
             let public_key = PublicKey::new(&secret_key, &mut rng);
 
             // Encode plaintexts
@@ -307,8 +315,8 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::do_something())]
         pub fn decrypt_result(
             origin: OriginFor<T>,
-            index: u32,        // Index of the ciphertext pair in storage
-            operation: String, // Operation to perform
+            index: u32,           // Index of the ciphertext pair in storage
+            operation: Operation, // Operation to perform
         ) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             let who = ensure_signed(origin)?;
@@ -345,11 +353,10 @@ pub mod pallet {
                 .map_err(|_| Error::<T>::EncryptionFailed)?;
 
             // Decrypt ciphertexts based on the mathematical operation
-            let multiplied_ciphers = match operation.as_str() {
-                "add" => &ciphertext_1 + &ciphertext_2,
-                "sub" => &ciphertext_1 - &ciphertext_2,
-                "mul" => &ciphertext_1 * &ciphertext_2,
-                _ => return Err(Error::<T>::FheError.into()),
+            let multiplied_ciphers = match operation {
+                Operation::Add => &ciphertext_1 + &ciphertext_2,
+                Operation::Sub => &ciphertext_1 - &ciphertext_2,
+                Operation::Mul => &ciphertext_1 * &ciphertext_2,
             };
             // Decrypt the result
             let decrypted_plaintext = secret_key
@@ -359,8 +366,6 @@ pub mod pallet {
             // Decode the decrypted plaintext
             let decrypted_vector = Vec::<i64>::try_decode(&decrypted_plaintext, Encoding::poly())
                 .map_err(|_| Error::<T>::EncodingFailed)?;
-
-            println!("Decrypted vector: {:?}", decrypted_vector[0]);
 
             // Emit event with the decrypted result
             Self::deposit_event(Event::ResultDecrypted {
