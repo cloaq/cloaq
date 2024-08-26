@@ -7,31 +7,27 @@ fn it_works_for_default_value() {
         // Go past genesis block so events get deposited
         System::set_block_number(1);
         // Dispatch a signed extrinsic.
-        assert_ok!(TemplateModule::encrypt_numbers(
-            RuntimeOrigin::signed(1),
-            10,
-            20
-        ));
+        assert_ok!(FheMath::encrypt_numbers(RuntimeOrigin::signed(1), 10, 20));
 
         // Add two numbers
-        assert_ok!(TemplateModule::decrypt_result(
+        assert_ok!(FheMath::decrypt_result(
             RuntimeOrigin::signed(1),
             0,
-            "add".to_string()
+            crate::Operation::Add
         ));
 
         // Subtract two numbers
-        assert_ok!(TemplateModule::decrypt_result(
+        assert_ok!(FheMath::decrypt_result(
             RuntimeOrigin::signed(1),
             0,
-            "sub".to_string()
+            crate::Operation::Sub
         ));
 
         // Multiply two numbers
-        assert_ok!(TemplateModule::decrypt_result(
+        assert_ok!(FheMath::decrypt_result(
             RuntimeOrigin::signed(1),
             0,
-            "mul".to_string()
+            crate::Operation::Mul
         ));
     });
 }

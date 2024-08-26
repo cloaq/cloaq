@@ -1,4 +1,4 @@
-use crate as pallet_template;
+use crate as pallet_fhe_math;
 use frame_support::derive_impl;
 use frame_support::pallet_prelude::ConstU32;
 use sp_runtime::BuildStorage;
@@ -10,7 +10,7 @@ frame_support::construct_runtime!(
     pub enum Test
     {
         System: frame_system,
-        TemplateModule: pallet_template,
+        FheMath: pallet_fhe_math,
     }
 );
 
@@ -19,7 +19,7 @@ impl frame_system::Config for Test {
     type Block = Block;
 }
 
-impl pallet_template::Config for Test {
+impl pallet_fhe_math::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
     type MaxCiphertextSize = ConstU32<1000000>;

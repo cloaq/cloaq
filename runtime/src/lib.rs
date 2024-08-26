@@ -252,9 +252,9 @@ impl pallet_sudo::Config for Runtime {
 impl pallet_fhe_math::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_fhe_math::weights::SubstrateWeight<Runtime>;
-    type FheKeySize = ConstU32<1024>;
-    type MaxCiphertextSize = ConstU32<1024>;
+    type MaxCiphertextSize = ConstU32<1000000>;
     type MaxCiphertextsPerUser = ConstU32<10>;
+    type FheKeySize = ConstU32<17000>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
