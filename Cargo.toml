@@ -2,20 +2,20 @@
 license = "MIT-0"
 authors = ["Parity Technologies <admin@parity.io>"]
 homepage = "https://paritytech.github.io/polkadot-sdk/"
-repository = "https://github.com/paritytech/polkadot-sdk-solochain-template.git"
+repository = "https://github.com/paritytech/polkadot-sdk-cloak.git"
 edition = "2021"
 
 [workspace]
 members = [
     "node",
-    "pallets/template",
+    "pallets/fhe-math",
     "runtime",
 ]
 resolver = "2"
 
 [workspace.dependencies]
-solochain-template-runtime = { path = "./runtime", default-features = false }
-pallet-template = { path = "./pallets/template", default-features = false }
+cloak-runtime = { path = "./runtime", default-features = false }
+pallet-fhe-math = { path = "./pallets/fhe-math", default-features = false }
 clap = { version = "4.5.3" }
 frame-benchmarking-cli = { version = "42.0.0", default-features = false }
 frame-system = { version = "37.0.0", default-features = false }
@@ -46,6 +46,7 @@ sp-consensus-grandpa = { version = "21.0.0", default-features = false }
 sp-core = { version = "34.0.0", default-features = false }
 sp-inherents = { version = "34.0.0", default-features = false }
 sp-io = { version = "38.0.0", default-features = false }
+sp-std = { version = "14.0.0", default-features = false }
 sp-keyring = { version = "39.0.0", default-features = false }
 sp-runtime = { version = "39.0.0", default-features = false }
 sp-timestamp = { version = "34.0.0", default-features = false }
@@ -72,9 +73,10 @@ sp-storage = { version = "21.0.0", default-features = false }
 sp-transaction-pool = { version = "34.0.0", default-features = false }
 sp-version = { version = "37.0.0", default-features = false }
 substrate-wasm-builder = { version = "24.0.0", default-features = false }
+rand = { version = "0.8", default-features = false, features = ["small_rng"] }
 
 # fhe deps
-fhe = { git = "https://github.com/Cloak-Network/fhe-no-std.git"}
-fhe-util = { git = "https://github.com/Cloak-Network/fhe-no-std.git"}
-fhe-math = { git = "https://github.com/Cloak-Network/fhe-no-std.git"}
-fhe-traits = { git = "https://github.com/Cloak-Network/fhe-no-std.git"}
+fhe = { git = "https://github.com/h4n0/fhe-no-std.git"}
+fhe-util = { git = "https://github.com/h4n0/fhe-no-std.git" }
+fhe-math = { git = "https://github.com/h4n0/fhe-no-std.git" }
+fhe-traits = { git = "https://github.com/h4n0/fhe-no-std.git" }
