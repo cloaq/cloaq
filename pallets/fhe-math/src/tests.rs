@@ -12,11 +12,26 @@ fn it_works_for_default_value() {
             10,
             20
         ));
+
+        // Add two numbers
         assert_ok!(TemplateModule::decrypt_result(
             RuntimeOrigin::signed(1),
             0,
             "add".to_string()
         ));
-        // TemplateModule::decrypt_result(RuntimeOrigin::signed(1), 0)
+
+        // Subtract two numbers
+        assert_ok!(TemplateModule::decrypt_result(
+            RuntimeOrigin::signed(1),
+            0,
+            "sub".to_string()
+        ));
+
+        // Multiply two numbers
+        assert_ok!(TemplateModule::decrypt_result(
+            RuntimeOrigin::signed(1),
+            0,
+            "mul".to_string()
+        ));
     });
 }
