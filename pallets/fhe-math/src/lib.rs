@@ -181,6 +181,14 @@ pub mod pallet {
             /// The decrypted result.
             result: Vec<i64>,
         },
+
+        /// User successfully encrypted numbers using a key.
+        NumbersEncryptedUsingKey {
+            /// The account who encrypted the numbers.
+            who: T::AccountId,
+            /// The ciphertext.
+            ciphertext: Vec<u8>,
+        },
     }
 
     #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
@@ -371,6 +379,115 @@ pub mod pallet {
             Self::deposit_event(Event::ResultDecrypted {
                 who,
                 result: decrypted_vector,
+            });
+
+            // Return a successful `DispatchResult`
+            Ok(())
+        }
+
+        #[pallet::call_index(2)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn decrypt_ciphertexts(
+            origin: OriginFor<T>,
+            cipher_text_1: Vec<u8>,
+            cipher_text_2: Vec<u8>,
+            index: u32,           // Index of the ciphertext pair in storage
+            operation: Operation, // Operation to perform
+        ) -> DispatchResult {
+            // Check that the extrinsic was signed and get the signer.
+            let who = ensure_signed(origin)?;
+
+            // Create BFV parameters with error handling
+            let parameters = BfvParametersBuilder::new()
+                .set_degree(2048)
+                .set_moduli(&[0x3fffffff000001])
+                .set_plaintext_modulus(1 << 10)
+                .build_arc()
+                .map_err(|_| Error::<T>::FailedToCreateParameters)?;
+
+            let ciphertext_1 = Ciphertext::from_bytes(&cipher_text_1, &parameters)
+                .map_err(|_| Error::<T>::EncryptionFailed)?;
+
+            let ciphertext_2 = Ciphertext::from_bytes(&cipher_text_2, &parameters)
+                .map_err(|_| Error::<T>::EncryptionFailed)?;
+
+            // Generate secret key
+            let fhe_keys = FheKeys::<T>::get(&who);
+            let secret_key_bytes: &[u8] = fhe_keys
+                .get(index as usize)
+                .ok_or(Error::<T>::NoneValue)?
+                .0
+                .as_slice();
+
+            let secret_key = SecretKey::from_bytes(secret_key_bytes, &parameters).unwrap();
+
+            // Decrypt ciphertexts based on the mathematical operation
+            let multiplied_ciphers = match operation {
+                Operation::Add => &ciphertext_1 + &ciphertext_2,
+                Operation::Sub => &ciphertext_1 - &ciphertext_2,
+                Operation::Mul => &ciphertext_1 * &ciphertext_2,
+            };
+            // Decrypt the result
+            let decrypted_plaintext = secret_key
+                .try_decrypt(&multiplied_ciphers)
+                .map_err(|_| Error::<T>::DecryptionFailed)?;
+
+            // Decode the decrypted plaintext
+            let decrypted_vector = Vec::<i64>::try_decode(&decrypted_plaintext, Encoding::poly())
+                .map_err(|_| Error::<T>::EncodingFailed)?;
+
+            // Emit event with the decrypted result
+            Self::deposit_event(Event::ResultDecrypted {
+                who,
+                result: decrypted_vector,
+            });
+
+            // Return a successful `DispatchResult`
+            Ok(())
+        }
+
+        #[pallet::call_index(3)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn encrypt_numbers_using_key(
+            origin: OriginFor<T>,
+            number: u64,
+            index: u32,
+        ) -> DispatchResult {
+            // Check that the extrinsic was signed and get the signer.
+            let who = ensure_signed(origin)?;
+
+            // Create BFV parameters with error handling
+            let parameters = BfvParametersBuilder::new()
+                .set_degree(2048)
+                .set_moduli(&[0x3fffffff000001])
+                .set_plaintext_modulus(1 << 10)
+                .build_arc()
+                .map_err(|_| Error::<T>::FailedToCreateParameters)?;
+
+            let mut rng = SmallRng::seed_from_u64(1);
+
+            // Generate secret key
+            let fhe_keys = FheKeys::<T>::get(&who);
+            let secret_key_bytes: &[u8] = fhe_keys
+                .get(index as usize)
+                .ok_or(Error::<T>::NoneValue)?
+                .0
+                .as_slice();
+
+            let secret_key = SecretKey::from_bytes(secret_key_bytes, &parameters).unwrap();
+
+            // Encode plaintexts
+            let plaintext = Plaintext::try_encode(&[number], Encoding::poly(), &parameters)
+                .map_err(|_| Error::<T>::EncodingFailed)?;
+
+            // Encrypt plaintexts
+            let ciphertext: Ciphertext = secret_key
+                .try_encrypt(&plaintext, &mut rng)
+                .map_err(|_| Error::<T>::EncryptionFailed)?;
+
+            Self::deposit_event(Event::NumbersEncryptedUsingKey {
+                who,
+                ciphertext: ciphertext.to_bytes().into(),
             });
 
             // Return a successful `DispatchResult`
