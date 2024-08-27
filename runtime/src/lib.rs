@@ -46,6 +46,7 @@ pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
 pub use pallet_fhe_math;
+pub use pallet_fhe_vote;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -260,6 +261,15 @@ impl pallet_fhe_math::Config for Runtime {
     type Randomness = RandomnessCollectiveFlip;
 }
 
+impl pallet_fhe_vote::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type WeightInfo = pallet_fhe_vote::weights::SubstrateWeight<Runtime>;
+    type MaxCiphertextSize = ConstU32<1000000>;
+    type MaxCiphertextsPerUser = ConstU32<10>;
+    type FheKeySize = ConstU32<17000>;
+    type Randomness = RandomnessCollectiveFlip;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 #[frame_support::runtime]
 mod runtime {
@@ -303,6 +313,9 @@ mod runtime {
 
     #[runtime::pallet_index(8)]
     pub type FheMath = pallet_fhe_math;
+
+    #[runtime::pallet_index(9)]
+    pub type FheVote = pallet_fhe_vote;
 }
 
 /// The address format for describing accounts.
@@ -353,6 +366,7 @@ mod benches {
         [pallet_timestamp, Timestamp]
         [pallet_sudo, Sudo]
         [pallet_fhe_math, FheMath]
+        [pallet_fhe_vote, FheMath]
         [pallet_insecure_randomness_collective_flip, RandomnessCollectiveFlip]
 
     );

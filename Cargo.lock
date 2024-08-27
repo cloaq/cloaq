@@ -1091,6 +1091,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-fhe-math",
+ "pallet-fhe-vote",
  "pallet-grandpa",
  "pallet-insecure-randomness-collective-flip",
  "pallet-sudo",
@@ -5218,6 +5219,27 @@ dependencies = [
 
 [[package]]
 name = "pallet-fhe-math"
+version = "0.1.0"
+dependencies = [
+ "fhe",
+ "fhe-math",
+ "fhe-traits",
+ "fhe-util",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-insecure-randomness-collective-flip",
+ "parity-scale-codec",
+ "rand",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-fhe-vote"
 version = "0.1.0"
 dependencies = [
  "fhe",

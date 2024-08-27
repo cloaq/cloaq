@@ -93,6 +93,7 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// A type representing the weights required by the dispatchables of this pallet.
         type WeightInfo: WeightInfo;
+
         /// Maximum size of a ciphertext in bytes.
         #[pallet::constant]
         type MaxCiphertextSize: Get<u32>;
@@ -106,12 +107,17 @@ pub mod pallet {
         type Randomness: Randomness<Self::Hash, BlockNumberFor<Self>>;
     }
 
-    /// A storage item for this pallet.
-    ///
-    /// In this template, we are declaring a storage item called `Something` that stores a single
-    /// `u32` value. Learn more about runtime storage here: <https://docs.substrate.io/build/runtime-storage/>
-    #[pallet::storage]
-    pub type Something<T> = StorageValue<_, u32>;
+    pub type GeneralData<T> = BoundedVec<u8, <T as Config>::MaxCiphertextSize>;
+
+    #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
+    #[scale_info(skip_type_params(T))]
+    pub struct VoteInitiate<T: Config> {
+        title: GeneralData<T>,
+        votes: GeneralData<T>,
+        vote_yes: GeneralData<T>,
+        vote_no: GeneralData<T>,
+        total_votes: u64,
+    }
 
     #[pallet::storage]
     #[pallet::getter(fn user_ciphertexts)]
@@ -119,13 +125,7 @@ pub mod pallet {
         _,
         Blake2_128Concat,
         T::AccountId,
-        BoundedVec<
-            (
-                BoundedVec<u8, T::MaxCiphertextSize>,
-                BoundedVec<u8, T::MaxCiphertextSize>,
-            ),
-            T::MaxCiphertextsPerUser,
-        >,
+        BoundedVec<VoteInitiate<T>, T::MaxCiphertextsPerUser>,
         ValueQuery,
     >;
 
@@ -155,52 +155,43 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
-        /// A user has successfully set a new value.
-        SomethingStored {
-            /// The new value set.
-            something: u32,
-            /// The account who set the new value.
-            who: T::AccountId,
-        },
-
         /// User successfully created FHE keys.
         FheKeysCreated {
             /// The account who created the keys.
             who: T::AccountId,
         },
 
-        /// User successfully encrypted numbers.
-        NumbersEncrypted {
+        /// Vote initiated by a user.
+        VoteInitiated {
             /// The account who encrypted the numbers.
             who: T::AccountId,
-            /// The first ciphertext.
-            ciphertext_1: Vec<u8>,
-            /// The second ciphertext.
-            ciphertext_2: Vec<u8>,
+            /// The vote title.
+            title: Vec<u8>,
+        },
+
+        /// Voted on a vote.
+        Voted {
+            /// The account who voted.
+            who: T::AccountId,
+            /// The vote title.
+            title: Vec<u8>,
         },
 
         /// User successfully decrypted the result.
-        ResultDecrypted {
+        VoteResult {
             /// The account who decrypted the result.
             who: T::AccountId,
             /// The decrypted result.
             result: Vec<i64>,
-        },
-
-        /// User successfully encrypted numbers using a key.
-        NumbersEncryptedUsingKey {
-            /// The account who encrypted the numbers.
-            who: T::AccountId,
-            /// The ciphertext.
-            ciphertext: Vec<u8>,
+            /// Total votes.
+            total_votes: u64,
         },
     }
 
     #[derive(Encode, Decode, Clone, RuntimeDebug, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
-    pub enum Operation {
-        Add,
-        Sub,
-        Mul,
+    pub enum Vote {
+        Yes,
+        No,
     }
 
     /// Errors that can be returned by this pallet.
@@ -249,11 +240,7 @@ pub mod pallet {
         /// error if it isn't. Learn more about origins here: <https://docs.substrate.io/build/origins/>
         #[pallet::call_index(0)]
         #[pallet::weight(T::WeightInfo::do_something())]
-        pub fn encrypt_numbers(
-            origin: OriginFor<T>,
-            number_1: u64,
-            number_2: u64,
-        ) -> DispatchResult {
+        pub fn initiate_vote(origin: OriginFor<T>, title: GeneralData<T>) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             let who = ensure_signed(origin)?;
 
@@ -272,26 +259,27 @@ pub mod pallet {
             let secret_key = SecretKey::random(&parameters, &mut rng);
             let public_key = PublicKey::new(&secret_key, &mut rng);
 
-            // Encode plaintexts
-            let plaintext_1 = Plaintext::try_encode(&[number_1], Encoding::poly(), &parameters)
+            // Encode initial vote number (0 in this case)
+            let plaintext_0 = Plaintext::try_encode(&[0u64], Encoding::poly(), &parameters)
                 .map_err(|_| Error::<T>::EncodingFailed)?;
-            let plaintext_2 = Plaintext::try_encode(&[number_2], Encoding::poly(), &parameters)
+            // Encode 1 for yes
+            let plaintext_1 = Plaintext::try_encode(&[1u64], Encoding::poly(), &parameters)
                 .map_err(|_| Error::<T>::EncodingFailed)?;
 
             // Encrypt plaintexts
+            let ciphertext_0: Ciphertext = secret_key
+                .try_encrypt(&plaintext_0, &mut rng)
+                .map_err(|_| Error::<T>::EncryptionFailed)?;
             let ciphertext_1: Ciphertext = secret_key
                 .try_encrypt(&plaintext_1, &mut rng)
                 .map_err(|_| Error::<T>::EncryptionFailed)?;
-            let ciphertext_2: Ciphertext = public_key
-                .try_encrypt(&plaintext_2, &mut rng)
-                .map_err(|_| Error::<T>::EncryptionFailed)?;
 
             // Convert Vec<u8> to BoundedVec<u8, T::MaxCiphertextSize>
+            let bounded_ciphertext_0: BoundedVec<u8, T::MaxCiphertextSize> =
+                BoundedVec::try_from(ciphertext_0.to_bytes())
+                    .map_err(|_| Error::<T>::ErrorVectorBound)?;
             let bounded_ciphertext_1: BoundedVec<u8, T::MaxCiphertextSize> =
                 BoundedVec::try_from(ciphertext_1.to_bytes())
-                    .map_err(|_| Error::<T>::ErrorVectorBound)?;
-            let bounded_ciphertext_2: BoundedVec<u8, T::MaxCiphertextSize> =
-                BoundedVec::try_from(ciphertext_2.to_bytes())
                     .map_err(|_| Error::<T>::ErrorVectorBound)?;
 
             // Convert the keys to bytes
@@ -303,10 +291,16 @@ pub mod pallet {
                 BoundedVec::try_from(public_key.to_bytes())
                     .map_err(|_| Error::<T>::ErrorVectorBound)?;
 
-            // Store the ciphertexts in storage
+            // Store the title and ciphertext in storage
             UserCiphertexts::<T>::mutate(&who, |ciphertexts| {
                 ciphertexts
-                    .try_push((bounded_ciphertext_1.clone(), bounded_ciphertext_2.clone()))
+                    .try_push(VoteInitiate {
+                        title: title.clone(),
+                        votes: bounded_ciphertext_0.clone(),
+                        vote_yes: bounded_ciphertext_1.clone(),
+                        vote_no: bounded_ciphertext_0.clone(),
+                        total_votes: 0,
+                    })
                     .map_err(|_| Error::<T>::FheError)
             })?;
 
@@ -315,10 +309,9 @@ pub mod pallet {
                     .map_err(|_| Error::<T>::FheError)
             })?;
 
-            Self::deposit_event(Event::NumbersEncrypted {
+            Self::deposit_event(Event::VoteInitiated {
                 who,
-                ciphertext_1: bounded_ciphertext_1.into(),
-                ciphertext_2: bounded_ciphertext_2.into(),
+                title: title.into(),
             });
 
             // Return a successful `DispatchResult`
@@ -327,17 +320,78 @@ pub mod pallet {
 
         #[pallet::call_index(1)]
         #[pallet::weight(T::WeightInfo::do_something())]
-        pub fn decrypt_result(
+        pub fn vote(
             origin: OriginFor<T>,
-            index: u32,           // Index of the ciphertext pair in storage
-            operation: Operation, // Operation to perform
+            index: u32, // Index of the ciphertext pair in storage
+            vote: Vote,
         ) -> DispatchResult {
             // Check that the extrinsic was signed and get the signer.
             let who = ensure_signed(origin)?;
 
             // Retrieve the ciphertexts from storage
             let ciphertexts = UserCiphertexts::<T>::get(&who);
-            let (ciphertext_1_bytes, ciphertext_2_bytes) = ciphertexts
+            let vote_initiate = ciphertexts
+                .get(index as usize)
+                .ok_or(Error::<T>::NoneValue)?;
+
+            // Create BFV parameters with error handling
+            let parameters = BfvParametersBuilder::new()
+                .set_degree(2048)
+                .set_moduli(&[0x3fffffff000001])
+                .set_plaintext_modulus(1 << 10)
+                .build_arc()
+                .map_err(|_| Error::<T>::FailedToCreateParameters)?;
+
+            // Deserialize the ciphertext
+            let votes_ciphertext =
+                Ciphertext::from_bytes(&vote_initiate.votes.as_ref(), &parameters)
+                    .map_err(|_| Error::<T>::EncryptionFailed)?;
+            let yes_ciphertext =
+                Ciphertext::from_bytes(&vote_initiate.vote_yes.as_ref(), &parameters)
+                    .map_err(|_| Error::<T>::EncryptionFailed)?;
+            let no_ciphertext =
+                Ciphertext::from_bytes(&vote_initiate.vote_no.as_ref(), &parameters)
+                    .map_err(|_| Error::<T>::EncryptionFailed)?;
+
+            // Decrypt ciphertexts based on the mathematical operation
+            let voted_ciphers = match vote {
+                Vote::Yes => &votes_ciphertext + &yes_ciphertext,
+                Vote::No => &votes_ciphertext + &no_ciphertext,
+            };
+            // Store the title and ciphertext in storage
+            UserCiphertexts::<T>::mutate(&who, |ciphertexts| {
+                if let Some(ciphertext) = ciphertexts.get_mut(index as usize) {
+                    ciphertext.total_votes += 1;
+                    ciphertext.votes = BoundedVec::try_from(voted_ciphers.to_bytes())
+                        .map_err(|_| Error::<T>::FheError)?;
+                    Ok(())
+                } else {
+                    Err(Error::<T>::NoneValue)
+                }
+            })?;
+
+            // Emit event with the decrypted result
+            Self::deposit_event(Event::Voted {
+                who,
+                title: vote_initiate.title.clone().into(),
+            });
+
+            // Return a successful `DispatchResult`
+            Ok(())
+        }
+
+        #[pallet::call_index(2)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn finalize_vote(
+            origin: OriginFor<T>,
+            index: u32, // Index of the ciphertext pair in storage
+        ) -> DispatchResult {
+            // Check that the extrinsic was signed and get the signer.
+            let who = ensure_signed(origin)?;
+
+            // Retrieve the ciphertexts from storage
+            let ciphertexts = UserCiphertexts::<T>::get(&who);
+            let vote_initiate = ciphertexts
                 .get(index as usize)
                 .ok_or(Error::<T>::NoneValue)?;
 
@@ -360,21 +414,12 @@ pub mod pallet {
             let secret_key = SecretKey::from_bytes(secret_key_bytes, &parameters).unwrap();
 
             // Deserialize the ciphertext
-            let ciphertext_1 = Ciphertext::from_bytes(ciphertext_1_bytes, &parameters)
-                .map_err(|_| Error::<T>::EncryptionFailed)?;
-
-            let ciphertext_2 = Ciphertext::from_bytes(ciphertext_2_bytes, &parameters)
-                .map_err(|_| Error::<T>::EncryptionFailed)?;
-
-            // Decrypt ciphertexts based on the mathematical operation
-            let multiplied_ciphers = match operation {
-                Operation::Add => &ciphertext_1 + &ciphertext_2,
-                Operation::Sub => &ciphertext_1 - &ciphertext_2,
-                Operation::Mul => &ciphertext_1 * &ciphertext_2,
-            };
+            let votes_ciphertext =
+                Ciphertext::from_bytes(&vote_initiate.votes.as_ref(), &parameters)
+                    .map_err(|_| Error::<T>::EncryptionFailed)?;
             // Decrypt the result
             let decrypted_plaintext = secret_key
-                .try_decrypt(&multiplied_ciphers)
+                .try_decrypt(&votes_ciphertext)
                 .map_err(|_| Error::<T>::DecryptionFailed)?;
 
             // Decode the decrypted plaintext
@@ -382,118 +427,10 @@ pub mod pallet {
                 .map_err(|_| Error::<T>::EncodingFailed)?;
 
             // Emit event with the decrypted result
-            Self::deposit_event(Event::ResultDecrypted {
+            Self::deposit_event(Event::VoteResult {
                 who,
                 result: decrypted_vector,
-            });
-
-            // Return a successful `DispatchResult`
-            Ok(())
-        }
-
-        #[pallet::call_index(2)]
-        #[pallet::weight(T::WeightInfo::do_something())]
-        pub fn decrypt_ciphertexts(
-            origin: OriginFor<T>,
-            cipher_text_1: Vec<u8>,
-            cipher_text_2: Vec<u8>,
-            index: u32,           // Index of the ciphertext pair in storage
-            operation: Operation, // Operation to perform
-        ) -> DispatchResult {
-            // Check that the extrinsic was signed and get the signer.
-            let who = ensure_signed(origin)?;
-
-            // Create BFV parameters with error handling
-            let parameters = BfvParametersBuilder::new()
-                .set_degree(2048)
-                .set_moduli(&[0x3fffffff000001])
-                .set_plaintext_modulus(1 << 10)
-                .build_arc()
-                .map_err(|_| Error::<T>::FailedToCreateParameters)?;
-
-            let ciphertext_1 = Ciphertext::from_bytes(&cipher_text_1, &parameters)
-                .map_err(|_| Error::<T>::EncryptionFailed)?;
-
-            let ciphertext_2 = Ciphertext::from_bytes(&cipher_text_2, &parameters)
-                .map_err(|_| Error::<T>::EncryptionFailed)?;
-
-            // Generate secret key
-            let fhe_keys = FheKeys::<T>::get(&who);
-            let secret_key_bytes: &[u8] = fhe_keys
-                .get(index as usize)
-                .ok_or(Error::<T>::NoneValue)?
-                .0
-                .as_slice();
-
-            let secret_key = SecretKey::from_bytes(secret_key_bytes, &parameters).unwrap();
-
-            // Decrypt ciphertexts based on the mathematical operation
-            let multiplied_ciphers = match operation {
-                Operation::Add => &ciphertext_1 + &ciphertext_2,
-                Operation::Sub => &ciphertext_1 - &ciphertext_2,
-                Operation::Mul => &ciphertext_1 * &ciphertext_2,
-            };
-            // Decrypt the result
-            let decrypted_plaintext = secret_key
-                .try_decrypt(&multiplied_ciphers)
-                .map_err(|_| Error::<T>::DecryptionFailed)?;
-
-            // Decode the decrypted plaintext
-            let decrypted_vector = Vec::<i64>::try_decode(&decrypted_plaintext, Encoding::poly())
-                .map_err(|_| Error::<T>::EncodingFailed)?;
-
-            // Emit event with the decrypted result
-            Self::deposit_event(Event::ResultDecrypted {
-                who,
-                result: decrypted_vector,
-            });
-
-            // Return a successful `DispatchResult`
-            Ok(())
-        }
-
-        #[pallet::call_index(3)]
-        #[pallet::weight(T::WeightInfo::do_something())]
-        pub fn encrypt_numbers_using_key(
-            origin: OriginFor<T>,
-            number: u64,
-            index: u32,
-        ) -> DispatchResult {
-            // Check that the extrinsic was signed and get the signer.
-            let who = ensure_signed(origin)?;
-
-            // Create BFV parameters with error handling
-            let parameters = BfvParametersBuilder::new()
-                .set_degree(2048)
-                .set_moduli(&[0x3fffffff000001])
-                .set_plaintext_modulus(1 << 10)
-                .build_arc()
-                .map_err(|_| Error::<T>::FailedToCreateParameters)?;
-
-            let mut rng = SmallRng::seed_from_u64(1);
-
-            // Generate secret key
-            let fhe_keys = FheKeys::<T>::get(&who);
-            let secret_key_bytes: &[u8] = fhe_keys
-                .get(index as usize)
-                .ok_or(Error::<T>::NoneValue)?
-                .0
-                .as_slice();
-
-            let secret_key = SecretKey::from_bytes(secret_key_bytes, &parameters).unwrap();
-
-            // Encode plaintexts
-            let plaintext = Plaintext::try_encode(&[number], Encoding::poly(), &parameters)
-                .map_err(|_| Error::<T>::EncodingFailed)?;
-
-            // Encrypt plaintexts
-            let ciphertext: Ciphertext = secret_key
-                .try_encrypt(&plaintext, &mut rng)
-                .map_err(|_| Error::<T>::EncryptionFailed)?;
-
-            Self::deposit_event(Event::NumbersEncryptedUsingKey {
-                who,
-                ciphertext: ciphertext.to_bytes().into(),
+                total_votes: vote_initiate.total_votes,
             });
 
             // Return a successful `DispatchResult`
