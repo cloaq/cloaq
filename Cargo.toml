@@ -79,7 +79,7 @@ substrate-wasm-builder = { version = "24.0.0", default-features = false }
 rand = { version = "0.8", default-features = false, features = ["small_rng"] }
 
 # fhe deps
-fhe = { git = "https://github.com/h4n0/fhe-no-std.git"}
-fhe-util = { git = "https://github.com/h4n0/fhe-no-std.git" }
-fhe-math = { git = "https://github.com/h4n0/fhe-no-std.git" }
-fhe-traits = { git = "https://github.com/h4n0/fhe-no-std.git" }
+fhe = { git = "https://github.com/Cloak-Network/fhe-no-std.git"}
+fhe-util = { git = "https://github.com/Cloak-Network/fhe-no-std.git" }
+fhe-math = { git = "https://github.com/Cloak-Network/fhe-no-std.git" }
+fhe-traits = { git = "https://github.com/Cloak-Network/fhe-no-std.git" }

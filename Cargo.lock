@@ -2086,7 +2086,7 @@ dependencies = [
 [[package]]
 name = "fhe"
 version = "0.1.0-beta.8"
-source = "git+https://github.com/h4n0/fhe-no-std.git#b712155d41072478564a4fb1e993278e0e9f1203"
+source = "git+https://github.com/Cloak-Network/fhe-no-std.git#e07664bb63f1b60e025285d1ba8b2973a52dd8a8"
 dependencies = [
  "doc-comment",
  "fhe-math",
@@ -2109,7 +2109,7 @@ dependencies = [
 [[package]]
 name = "fhe-math"
 version = "0.1.0-beta.8"
-source = "git+https://github.com/h4n0/fhe-no-std.git#b712155d41072478564a4fb1e993278e0e9f1203"
+source = "git+https://github.com/Cloak-Network/fhe-no-std.git#e07664bb63f1b60e025285d1ba8b2973a52dd8a8"
 dependencies = [
  "concrete-ntt",
  "derivative",
@@ -2136,7 +2136,7 @@ dependencies = [
 [[package]]
 name = "fhe-traits"
 version = "0.1.0-beta.8"
-source = "git+https://github.com/h4n0/fhe-no-std.git#b712155d41072478564a4fb1e993278e0e9f1203"
+source = "git+https://github.com/Cloak-Network/fhe-no-std.git#e07664bb63f1b60e025285d1ba8b2973a52dd8a8"
 dependencies = [
  "rand",
 ]
@@ -2144,7 +2144,7 @@ dependencies = [
 [[package]]
 name = "fhe-util"
 version = "0.1.0-beta.8"
-source = "git+https://github.com/h4n0/fhe-no-std.git#b712155d41072478564a4fb1e993278e0e9f1203"
+source = "git+https://github.com/Cloak-Network/fhe-no-std.git#e07664bb63f1b60e025285d1ba8b2973a52dd8a8"
 dependencies = [
  "itertools 0.12.1",
  "num-bigint-dig",
