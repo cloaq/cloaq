@@ -47,6 +47,7 @@ frame-system-rpc-runtime-api.workspace = true
 pallet-transaction-payment-rpc-runtime-api.workspace = true
 frame-benchmarking = { optional = true, workspace = true }
 frame-system-benchmarking = { optional = true, workspace = true }
+pallet-insecure-randomness-collective-flip.workspace = true
 pallet-fhe-math.workspace = true
 
 [build-dependencies]

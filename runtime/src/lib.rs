@@ -249,12 +249,15 @@ impl pallet_sudo::Config for Runtime {
     type WeightInfo = pallet_sudo::weights::SubstrateWeight<Runtime>;
 }
 
+impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
+
 impl pallet_fhe_math::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = pallet_fhe_math::weights::SubstrateWeight<Runtime>;
     type MaxCiphertextSize = ConstU32<1000000>;
     type MaxCiphertextsPerUser = ConstU32<10>;
     type FheKeySize = ConstU32<17000>;
+    type Randomness = RandomnessCollectiveFlip;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -296,6 +299,9 @@ mod runtime {
     pub type Sudo = pallet_sudo;
 
     #[runtime::pallet_index(7)]
+    pub type RandomnessCollectiveFlip = pallet_insecure_randomness_collective_flip;
+
+    #[runtime::pallet_index(8)]
     pub type FheMath = pallet_fhe_math;
 }
 
@@ -347,6 +353,8 @@ mod benches {
         [pallet_timestamp, Timestamp]
         [pallet_sudo, Sudo]
         [pallet_fhe_math, FheMath]
+        [pallet_insecure_randomness_collective_flip, RandomnessCollectiveFlip]
+
     );
 }
 

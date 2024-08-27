@@ -67,11 +67,17 @@ pub mod pallet {
     use super::*;
     use fhe::bfv::{BfvParametersBuilder, Ciphertext, Encoding, Plaintext, PublicKey, SecretKey};
     use fhe_traits::*;
-    use frame_support::pallet_prelude::*;
-    use frame_support::BoundedVec;
+    use frame_support::{
+        dispatch::DispatchResult,
+        pallet_prelude::*,
+        storage::bounded_vec::BoundedVec,
+        traits::{Get, Randomness},
+    };
     use frame_system::pallet_prelude::*;
     use rand::{rngs::SmallRng, SeedableRng};
     use sp_std::prelude::*;
+
+    /// Type alias for the `BlockNumber` associated type of system config.
 
     // The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
     // (`Call`s) in this pallet.
@@ -89,7 +95,6 @@ pub mod pallet {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
         /// A type representing the weights required by the dispatchables of this pallet.
         type WeightInfo: WeightInfo;
-
         /// Maximum size of a ciphertext in bytes.
         #[pallet::constant]
         type MaxCiphertextSize: Get<u32>;
@@ -99,6 +104,8 @@ pub mod pallet {
         /// Size of the FHE key in bytes.
         #[pallet::constant]
         type FheKeySize: Get<u32>;
+        /// Randomness source
+        type Randomness: Randomness<Self::Hash, BlockNumberFor<Self>>;
     }
 
     /// A storage item for this pallet.
@@ -260,7 +267,8 @@ pub mod pallet {
                 .build_arc()
                 .map_err(|_| Error::<T>::FailedToCreateParameters)?;
 
-            let mut rng = SmallRng::seed_from_u64(1);
+            // Build a random number generator with a random seed
+            let mut rng = SmallRng::seed_from_u64(Self::generate_random_seed());
 
             // Generate keys
             let secret_key = SecretKey::random(&parameters, &mut rng);
@@ -492,6 +500,14 @@ pub mod pallet {
 
             // Return a successful `DispatchResult`
             Ok(())
+        }
+    }
+
+    impl<T: Config> Pallet<T> {
+        fn generate_random_seed() -> u64 {
+            let (random_seed, _) = T::Randomness::random(&b"fhe-math"[..]);
+            <u64>::decode(&mut random_seed.as_ref())
+                .expect("random seed shall always be bigger than u64; qed")
         }
     }
 }

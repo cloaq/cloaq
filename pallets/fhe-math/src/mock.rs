@@ -11,6 +11,7 @@ frame_support::construct_runtime!(
     {
         System: frame_system,
         FheMath: pallet_fhe_math,
+        RandomnessCollectiveFlip: pallet_insecure_randomness_collective_flip,
     }
 );
 
@@ -19,12 +20,15 @@ impl frame_system::Config for Test {
     type Block = Block;
 }
 
+impl pallet_insecure_randomness_collective_flip::Config for Test {}
+
 impl pallet_fhe_math::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
     type MaxCiphertextSize = ConstU32<1000000>;
     type MaxCiphertextsPerUser = ConstU32<10>;
     type FheKeySize = ConstU32<17000>;
+    type Randomness = RandomnessCollectiveFlip;
 }
 
 // Build genesis storage according to the mock runtime.
