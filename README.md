@@ -8,7 +8,7 @@ As Fully Homomorphic Encryption (FHE) gains increasing attention for its critica
 
 
 ## Architecture
-![Cloaq Architecture](https://raw.githubusercontent.com/h4n0/polkadot-hackathon-2024/47e96067a13aba304f1b4e5fe1f1f762ea01b195/singapore/23-Cloak/doc/cloak_arch.jpg))
+![Cloaq Architecture](https://raw.githubusercontent.com/h4n0/polkadot-hackathon-2024/47e96067a13aba304f1b4e5fe1f1f762ea01b195/singapore/23-Cloak/doc/cloak_arch.jpg)
 
 
 ## Build
